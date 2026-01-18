@@ -35,7 +35,7 @@ def handle_api_error(e):
     elif "404" in err_msg or "relation" in err_msg and "does not exist" in err_msg:
         return "⛔ BŁĄD TABELI: Tabela nie istnieje lub ma inną nazwę niż w kodzie (szukam: 'produkty' i 'kategorie')."
     elif "42703" in err_msg:
-        return f"⛔ BŁĄD KOLUMNY: Próbujesz użyć kolumny, która nie istnieje w bazie (np. created_at). Szczegóły: {e}"
+        return f"⛔ BŁĄD KOLUMNY: Próbujesz użyć kolumny, która nie istnieje w bazie (np. 'liczba' lub 'created_at'). Szczegóły: {e}"
     else:
         return f"Wystąpił nieoczekiwany błąd bazy danych: {e}"
 
@@ -65,7 +65,7 @@ def delete_category(category_id):
 def get_products():
     try:
         # Tabela: produkty, Relacja: kategorie(nazwa)
-        # POPRAWKA: Sortowanie po 'id' zamiast 'created_at', bo 'created_at' nie istnieje
+        # Sortowanie po 'id' zamiast 'created_at'
         response = supabase.table("produkty").select("*, kategorie(nazwa)").order("id", desc=True).execute()
         
         data = []
@@ -82,12 +82,13 @@ def get_products():
         st.error(handle_api_error(e))
         return []
 
-def add_product(nazwa, cena, opis, kategoria_id):
+def add_product(nazwa, cena, liczba, opis, kategoria_id):
     try:
         # Mapowanie zmiennych Pythona na polskie nazwy kolumn w bazie
         data = {
             "nazwa": nazwa,
             "cena": cena,
+            "liczba": liczba,
             "opis": opis,
             "kategoria_id": kategoria_id
         }
@@ -150,18 +151,23 @@ with tab_products:
                 col1, col2 = st.columns(2)
                 with col1:
                     p_name = st.text_input("Nazwa produktu")
-                    p_price = st.number_input("Cena (PLN)", min_value=0.0, step=0.01)
                 with col2:
                     # Tworzenie mapy wyboru: Nazwa Kategorii -> ID Kategorii
-                    # Używamy klucza 'nazwa'
                     cat_map = {c['nazwa']: c['id'] for c in categories}
                     p_cat_name = st.selectbox("Kategoria", list(cat_map.keys()))
+                
+                # Drugi rząd formularza: Cena i Ilość
+                col3, col4 = st.columns(2)
+                with col3:
+                    p_price = st.number_input("Cena (PLN)", min_value=0.0, step=0.01)
+                with col4:
+                    p_quantity = st.number_input("Ilość (szt.)", min_value=0, step=1, value=1)
                 
                 p_desc = st.text_area("Opis")
                 
                 if st.form_submit_button("Dodaj produkt"):
                     if p_name:
-                        add_product(p_name, p_price, p_desc, cat_map[p_cat_name])
+                        add_product(p_name, p_price, p_quantity, p_desc, cat_map[p_cat_name])
                         st.rerun()
                     else:
                         st.error("Nazwa produktu jest wymagana.")
@@ -173,8 +179,9 @@ with tab_products:
     if products:
         df = pd.DataFrame(products)
         
-        # Oczekiwane kolumny po zmianie nazw
-        wanted_cols = ['id', 'nazwa', 'cena', 'kategoria_nazwa', 'opis']
+        # Oczekiwane kolumny po zmianie nazw + kolumna 'liczba'
+        wanted_cols = ['id', 'nazwa', 'cena', 'liczba', 'kategoria_nazwa', 'opis']
+        # Filtrujemy, żeby aplikacja nie padła, jeśli kolumny 'liczba' jeszcze nie ma w bazie
         available_cols = [c for c in wanted_cols if c in df.columns]
         
         st.dataframe(
@@ -182,6 +189,7 @@ with tab_products:
             use_container_width=True,
             column_config={
                 "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
+                "liczba": st.column_config.NumberColumn("Ilość", format="%d szt."),
                 "nazwa": "Nazwa",
                 "kategoria_nazwa": "Kategoria",
                 "opis": "Opis"
@@ -189,7 +197,7 @@ with tab_products:
         )
 
         st.caption("Aby usunąć produkt, wybierz go poniżej:")
-        # Formatowanie selectboxa również używa 'nazwa' i 'cena'
+        # Formatowanie selectboxa
         p_to_del = st.selectbox("Wybierz do usunięcia", products, format_func=lambda x: f"{x['nazwa']} ({x['cena']} zł)")
         if st.button("🗑️ Usuń wybrany produkt"):
             delete_product(p_to_del['id'])
