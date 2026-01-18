@@ -7,8 +7,8 @@ import pandas as pd
 # -----------------------------------------------------------------------------
 # Pobieramy dane logowania z sekretów Streamlit (lokalnie .streamlit/secrets.toml, w chmurze Settings -> Secrets)
 try:
-    SUPABASE_URL = st.secrets["https://eelyrtkxgoocqdsuiers.supabase.co"]
-    SUPABASE_KEY = st.secrets["sb_publishable_sadHenKcMQIJBf0LUb2HRQ_toFYN9Rt"]
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 except FileNotFoundError:
     st.error("Nie znaleziono sekretów! Upewnij się, że skonfigurowałeś .streamlit/secrets.toml lub sekrety w Streamlit Cloud.")
     st.stop()
