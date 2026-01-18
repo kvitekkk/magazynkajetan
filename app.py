@@ -84,14 +84,13 @@ def get_products():
         st.error(handle_api_error(e))
         return []
 
-def add_product(nazwa, cena, liczba, opis, kategoria_id):
+def add_product(nazwa, cena, liczba, kategoria_id):
     """Zwraca True jeśli sukces, False jeśli błąd"""
     try:
         data = {
             "nazwa": nazwa,
             "cena": cena,
             "liczba": liczba,
-            "opis": opis,
             "kategoria_id": kategoria_id
         }
         supabase.table("produkty").insert(data).execute()
@@ -166,12 +165,10 @@ with tab_products:
                 with col4:
                     p_quantity = st.number_input("Ilość (szt.)", min_value=0, step=1, value=1)
                 
-                p_desc = st.text_area("Opis")
-                
                 if st.form_submit_button("Dodaj produkt"):
                     if p_name:
                         # Przekazujemy sterowanie do funkcji i sprawdzamy wynik
-                        success = add_product(p_name, p_price, p_quantity, p_desc, cat_map[p_cat_name])
+                        success = add_product(p_name, p_price, p_quantity, cat_map[p_cat_name])
                         if success:
                             time.sleep(1) # Opóźnienie dla lepszego UX
                             st.rerun()
@@ -184,7 +181,7 @@ with tab_products:
     if products:
         df = pd.DataFrame(products)
         
-        wanted_cols = ['id', 'nazwa', 'cena', 'liczba', 'kategoria_nazwa', 'opis']
+        wanted_cols = ['id', 'nazwa', 'cena', 'liczba', 'kategoria_nazwa']
         available_cols = [c for c in wanted_cols if c in df.columns]
         
         st.dataframe(
@@ -194,8 +191,7 @@ with tab_products:
                 "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
                 "liczba": st.column_config.NumberColumn("Ilość", format="%d szt."),
                 "nazwa": "Nazwa",
-                "kategoria_nazwa": "Kategoria",
-                "opis": "Opis"
+                "kategoria_nazwa": "Kategoria"
             }
         )
 
