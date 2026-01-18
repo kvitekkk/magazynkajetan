@@ -3,172 +3,194 @@ from supabase import create_client, Client
 import pandas as pd
 
 # -----------------------------------------------------------------------------
-# 1. KONFIGURACJA I POŁĄCZENIE Z SUPABASE
+# 1. KONFIGURACJA
 # -----------------------------------------------------------------------------
-# Pobieramy dane logowania z sekretów Streamlit (lokalnie .streamlit/secrets.toml, w chmurze Settings -> Secrets)
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-except FileNotFoundError:
-    st.error("Nie znaleziono sekretów! Upewnij się, że skonfigurowałeś .streamlit/secrets.toml lub sekrety w Streamlit Cloud.")
+except (FileNotFoundError, KeyError):
+    st.error("❌ Brak konfiguracji! Upewnij się, że dodałeś SUPABASE_URL i SUPABASE_KEY w .streamlit/secrets.toml lub w panelu Streamlit Cloud.")
     st.stop()
 
 @st.cache_resource
 def init_connection():
-    """Inicjalizacja klienta Supabase"""
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+    """Tworzy połączenie z Supabase"""
+    try:
+        return create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        st.error(f"❌ Nie udało się połączyć z Supabase. Sprawdź poprawność URL i klucza API.\nBłąd: {e}")
+        st.stop()
 
 supabase: Client = init_connection()
 
 # -----------------------------------------------------------------------------
-# 2. FUNKCJE POMOCNICZE (CRUD)
+# 2. FUNKCJE (CRUD)
 # -----------------------------------------------------------------------------
+
+def handle_api_error(e):
+    """Pomocnicza funkcja do tłumaczenia błędów z bazy"""
+    err_msg = str(e)
+    if "42501" in err_msg or "permission denied" in err_msg:
+        return "⛔ BŁĄD UPRAWNIEŃ (RLS): Twoje tabele istnieją, ale Supabase blokuje do nich dostęp. \n\nRozwiązanie: Wejdź w Supabase -> Table Editor -> Edit Table -> Odznacz 'Enable Row Level Security (RLS)' lub dodaj odpowiednie Policies."
+    elif "404" in err_msg or "relation" in err_msg and "does not exist" in err_msg:
+        return "⛔ BŁĄD TABELI: Tabela nie istnieje lub ma inną nazwę niż w kodzie (szukam: 'produkty' i 'kategorie')."
+    else:
+        return f"Wystąpił nieoczekiwany błąd bazy danych: {e}"
 
 def get_categories():
-    """Pobiera wszystkie kategorie"""
-    response = supabase.table("categories").select("*").order("name").execute()
-    return response.data
+    try:
+        # Tabela: kategorie, kolumna: nazwa
+        response = supabase.table("kategorie").select("*").order("nazwa").execute()
+        return response.data
+    except Exception as e:
+        st.error(handle_api_error(e))
+        return []
 
 def add_category(name):
-    """Dodaje nową kategorię"""
     try:
-        supabase.table("categories").insert({"name": name}).execute()
-        st.success(f"Dodano kategorię: {name}")
+        supabase.table("kategorie").insert({"nazwa": name}).execute()
+        st.success(f"✅ Dodano kategorię: {name}")
     except Exception as e:
-        st.error(f"Błąd podczas dodawania kategorii: {e}")
+        st.error(handle_api_error(e))
 
 def delete_category(category_id):
-    """Usuwa kategorię"""
     try:
-        supabase.table("categories").delete().eq("id", category_id).execute()
-        st.success("Usunięto kategorię.")
+        supabase.table("kategorie").delete().eq("id", category_id).execute()
+        st.success("✅ Usunięto kategorię.")
     except Exception as e:
-        st.error(f"Błąd usuwania (upewnij się, że kategoria jest pusta): {e}")
+        st.error(handle_api_error(e))
 
 def get_products():
-    """Pobiera produkty wraz z nazwami kategorii (join)"""
-    # Zakładamy relację: products.category_id -> categories.id
-    response = supabase.table("products").select("*, categories(name)").order("created_at", desc=True).execute()
-    
-    # Przekształcenie danych do płaskiej struktury dla DataFrame
-    data = []
-    for item in response.data:
-        flat_item = item.copy()
-        if item.get('categories'):
-            flat_item['category_name'] = item['categories']['name']
-        else:
-            flat_item['category_name'] = "Brak"
-        data.append(flat_item)
-    return data
-
-def add_product(name, price, description, category_id):
-    """Dodaje nowy produkt"""
     try:
-        data = {
-            "name": name,
-            "price": price,
-            "description": description,
-            "category_id": category_id
-        }
-        supabase.table("products").insert(data).execute()
-        st.success(f"Dodano produkt: {name}")
+        # Tabela: produkty, Relacja: kategorie(nazwa)
+        # UWAGA: Zakładam, że klucz obcy w tabeli 'produkty' to 'kategoria_id'
+        response = supabase.table("produkty").select("*, kategorie(nazwa)").order("created_at", desc=True).execute()
+        
+        data = []
+        for item in response.data:
+            flat_item = item.copy()
+            # Spłaszczanie zagnieżdżonego obiektu kategorii (pobranego przez join)
+            if item.get('kategorie'):
+                flat_item['kategoria_nazwa'] = item['kategorie']['nazwa']
+            else:
+                flat_item['kategoria_nazwa'] = "---"
+            data.append(flat_item)
+        return data
     except Exception as e:
-        st.error(f"Błąd podczas dodawania produktu: {e}")
+        st.error(handle_api_error(e))
+        return []
+
+def add_product(nazwa, cena, opis, kategoria_id):
+    try:
+        # Mapowanie zmiennych Pythona na polskie nazwy kolumn w bazie
+        data = {
+            "nazwa": nazwa,
+            "cena": cena,
+            "opis": opis,
+            "kategoria_id": kategoria_id
+        }
+        supabase.table("produkty").insert(data).execute()
+        st.success(f"✅ Dodano produkt: {nazwa}")
+    except Exception as e:
+        st.error(handle_api_error(e))
 
 def delete_product(product_id):
-    """Usuwa produkt"""
     try:
-        supabase.table("products").delete().eq("id", product_id).execute()
-        st.success("Usunięto produkt.")
+        supabase.table("produkty").delete().eq("id", product_id).execute()
+        st.success("✅ Usunięto produkt.")
     except Exception as e:
-        st.error(f"Błąd: {e}")
+        st.error(handle_api_error(e))
 
 # -----------------------------------------------------------------------------
-# 3. INTERFEJS UŻYTKOWNIKA (STREAMLIT)
+# 3. INTERFEJS (FRONTEND)
 # -----------------------------------------------------------------------------
 
-st.title("📦 Panel Zarządzania Magazynem")
-st.markdown("Prosta aplikacja CRUD zintegrowana z Supabase.")
+st.title("📦 Magazyn - Panel Sterowania")
 
-# Zakładki dla lepszej organizacji
-tab1, tab2 = st.tabs(["🛒 Produkty", "📂 Kategorie"])
+# Sprawdzenie połączenia przy starcie
+categories = get_categories()
 
-# --- ZAKŁADKA: KATEGORIE ---
-with tab2:
-    st.header("Zarządzanie Kategoriami")
-    
-    # Formularz dodawania
-    with st.form("new_category"):
-        new_cat_name = st.text_input("Nazwa nowej kategorii")
-        submitted_cat = st.form_submit_button("Dodaj kategorię")
-        if submitted_cat and new_cat_name:
-            add_category(new_cat_name)
-            st.rerun() # Odśwież stronę, by zobaczyć zmiany
+# GŁÓWNY UKŁAD ZAKŁADEK
+tab_products, tab_categories = st.tabs(["🛒 Lista Produktów", "📂 Edycja Kategorii"])
+
+# --- ZAKŁADKA 2: KATEGORIE ---
+with tab_categories:
+    st.subheader("Dodaj nową kategorię")
+    with st.form("cat_form", clear_on_submit=True):
+        new_cat = st.text_input("Nazwa")
+        if st.form_submit_button("Zapisz kategorię"):
+            if new_cat:
+                add_category(new_cat)
+                st.rerun()
+            else:
+                st.warning("Wpisz nazwę.")
 
     st.divider()
-    
-    # Wyświetlanie listy
-    categories = get_categories()
+    st.subheader("Istniejące kategorie")
     if categories:
-        df_cat = pd.DataFrame(categories)
-        # Wyświetlamy tabelę, ale dodajemy też przyciski usuwania
         for cat in categories:
-            col1, col2 = st.columns([4, 1])
-            col1.text(f"ID: {cat['id']} | {cat['name']}")
-            if col2.button("Usuń", key=f"del_cat_{cat['id']}"):
+            c1, c2 = st.columns([5, 1])
+            # Używamy klucza 'nazwa' zamiast 'name'
+            c1.markdown(f"**{cat.get('nazwa', 'Bez nazwy')}** (ID: {cat.get('id')})")
+            if c2.button("Usuń", key=f"del_c_{cat['id']}"):
                 delete_category(cat['id'])
                 st.rerun()
     else:
-        st.info("Brak kategorii w bazie.")
+        st.info("Brak kategorii lub brak dostępu do tabeli.")
 
-# --- ZAKŁADKA: PRODUKTY ---
-with tab1:
-    st.header("Zarządzanie Produktami")
-
-    # Pobieramy kategorie do listy rozwijanej
-    categories_list = get_categories()
-    if not categories_list:
-        st.warning("Najpierw dodaj przynajmniej jedną kategorię w zakładce 'Kategorie'!")
+# --- ZAKŁADKA 1: PRODUKTY ---
+with tab_products:
+    if not categories:
+        st.warning("⚠️ Aby dodawać produkty, musisz mieć zdefiniowane kategorie. Sprawdź zakładkę 'Edycja Kategorii'.")
     else:
-        # Formularz dodawania produktu
-        with st.form("new_product"):
-            col_a, col_b = st.columns(2)
-            with col_a:
-                prod_name = st.text_input("Nazwa produktu")
-                prod_price = st.number_input("Cena (PLN)", min_value=0.01, step=0.01)
-            with col_b:
-                # Tworzymy mapę nazwa -> id
-                cat_options = {c['name']: c['id'] for c in categories_list}
-                selected_cat_name = st.selectbox("Kategoria", list(cat_options.keys()))
+        with st.expander("➕ Dodaj nowy produkt", expanded=False):
+            with st.form("prod_form", clear_on_submit=True):
+                col1, col2 = st.columns(2)
+                with col1:
+                    p_name = st.text_input("Nazwa produktu")
+                    p_price = st.number_input("Cena (PLN)", min_value=0.0, step=0.01)
+                with col2:
+                    # Tworzenie mapy wyboru: Nazwa Kategorii -> ID Kategorii
+                    # Używamy klucza 'nazwa'
+                    cat_map = {c['nazwa']: c['id'] for c in categories}
+                    p_cat_name = st.selectbox("Kategoria", list(cat_map.keys()))
                 
-            prod_desc = st.text_area("Opis produktu")
-            
-            submitted_prod = st.form_submit_button("Dodaj produkt")
-            
-            if submitted_prod and prod_name:
-                cat_id = cat_options[selected_cat_name]
-                add_product(prod_name, prod_price, prod_desc, cat_id)
-                st.rerun()
+                p_desc = st.text_area("Opis")
+                
+                if st.form_submit_button("Dodaj produkt"):
+                    if p_name:
+                        add_product(p_name, p_price, p_desc, cat_map[p_cat_name])
+                        st.rerun()
+                    else:
+                        st.error("Nazwa produktu jest wymagana.")
 
     st.divider()
-
-    # Wyświetlanie produktów
+    
+    # Tabela produktów
     products = get_products()
     if products:
-        # Prezentacja w ładnej tabeli interaktywnej
-        df_prods = pd.DataFrame(products)
-        # Wybieramy tylko interesujące kolumny do wyświetlenia
-        display_df = df_prods[['id', 'name', 'price', 'category_name', 'description']]
-        st.dataframe(display_df, use_container_width=True)
-
-        st.subheader("Usuwanie produktu")
-        # Prosty selectbox do wyboru ID do usunięcia (bezpieczniejsze niż przyciski przy dużej liście)
-        prod_to_delete = st.selectbox("Wybierz produkt do usunięcia", 
-                                      options=products, 
-                                      format_func=lambda x: f"{x['name']} ({x['price']} PLN)")
+        df = pd.DataFrame(products)
         
-        if st.button("Usuń wybrany produkt", type="primary"):
-            delete_product(prod_to_delete['id'])
+        # Oczekiwane kolumny po zmianie nazw
+        wanted_cols = ['id', 'nazwa', 'cena', 'kategoria_nazwa', 'opis']
+        available_cols = [c for c in wanted_cols if c in df.columns]
+        
+        st.dataframe(
+            df[available_cols], 
+            use_container_width=True,
+            column_config={
+                "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
+                "nazwa": "Nazwa",
+                "kategoria_nazwa": "Kategoria",
+                "opis": "Opis"
+            }
+        )
+
+        st.caption("Aby usunąć produkt, wybierz go poniżej:")
+        # Formatowanie selectboxa również używa 'nazwa' i 'cena'
+        p_to_del = st.selectbox("Wybierz do usunięcia", products, format_func=lambda x: f"{x['nazwa']} ({x['cena']} zł)")
+        if st.button("🗑️ Usuń wybrany produkt"):
+            delete_product(p_to_del['id'])
             st.rerun()
     else:
         st.info("Brak produktów w bazie.")
