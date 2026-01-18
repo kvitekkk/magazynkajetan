@@ -34,6 +34,8 @@ def handle_api_error(e):
         return "⛔ BŁĄD UPRAWNIEŃ (RLS): Twoje tabele istnieją, ale Supabase blokuje do nich dostęp. \n\nRozwiązanie: Wejdź w Supabase -> Table Editor -> Edit Table -> Odznacz 'Enable Row Level Security (RLS)' lub dodaj odpowiednie Policies."
     elif "404" in err_msg or "relation" in err_msg and "does not exist" in err_msg:
         return "⛔ BŁĄD TABELI: Tabela nie istnieje lub ma inną nazwę niż w kodzie (szukam: 'produkty' i 'kategorie')."
+    elif "42703" in err_msg:
+        return f"⛔ BŁĄD KOLUMNY: Próbujesz użyć kolumny, która nie istnieje w bazie (np. created_at). Szczegóły: {e}"
     else:
         return f"Wystąpił nieoczekiwany błąd bazy danych: {e}"
 
@@ -63,8 +65,8 @@ def delete_category(category_id):
 def get_products():
     try:
         # Tabela: produkty, Relacja: kategorie(nazwa)
-        # UWAGA: Zakładam, że klucz obcy w tabeli 'produkty' to 'kategoria_id'
-        response = supabase.table("produkty").select("*, kategorie(nazwa)").order("created_at", desc=True).execute()
+        # POPRAWKA: Sortowanie po 'id' zamiast 'created_at', bo 'created_at' nie istnieje
+        response = supabase.table("produkty").select("*, kategorie(nazwa)").order("id", desc=True).execute()
         
         data = []
         for item in response.data:
