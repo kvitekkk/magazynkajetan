@@ -14,150 +14,6 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# NOWOCZESNY DESIGN (CSS)
-# -----------------------------------------------------------------------------
-st.markdown("""
-<style>
-    /* Import nowoczesnej czcionki */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Tło aplikacji */
-    .stApp {
-        background-color: #fcfdfd;
-    }
-
-    /* Stylizacja nagłówka (Gradient Text) */
-    h1 {
-        font-weight: 800 !important;
-        background: -webkit-linear-gradient(45deg, #111827, #4b5563);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        padding-bottom: 10px;
-    }
-
-    /* Karty metryk (na górze) */
-    div[data-testid="stMetric"] {
-        background-color: #ffffff;
-        border: 1px solid #e5e7eb;
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-    }
-    div[data-testid="stMetricLabel"] {
-        font-size: 0.9rem;
-        color: #6b7280;
-    }
-    div[data-testid="stMetricValue"] {
-        font-weight: 700;
-        color: #111827;
-    }
-
-    /* Kontenery z obramowaniem (Formularze, Sekcje) */
-    div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        background-color: #ffffff;
-        border-radius: 16px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-        padding: 20px;
-    }
-
-    /* Nowoczesna tabela */
-    table {
-        width: 100%;
-        border-collapse: separate; 
-        border-spacing: 0;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-        margin-bottom: 1rem;
-        font-size: 0.95rem;
-    }
-    
-    thead tr th {
-        background-color: #f9fafb !important;
-        color: #374151 !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        font-size: 0.75rem !important;
-        letter-spacing: 0.05em;
-        padding: 16px !important;
-        border-bottom: 1px solid #e5e7eb !important;
-    }
-    
-    tbody tr td {
-        padding: 14px 16px !important;
-        border-bottom: 1px solid #f3f4f6 !important;
-        color: #1f2937;
-        vertical-align: middle;
-    }
-    
-    tbody tr:last-child td {
-        border-bottom: none !important;
-    }
-    
-    tbody tr:hover {
-        background-color: #f9fafb;
-    }
-
-    /* Przyciski */
-    button[kind="primary"] {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-        transition: all 0.2s;
-    }
-    button[kind="primary"]:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.3);
-    }
-    button[kind="secondary"] {
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-    }
-
-    /* Inputs */
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-        border-radius: 8px;
-        border-color: #e5e7eb;
-    }
-    .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-    }
-
-    /* Dark Mode Support overrides */
-    @media (prefers-color-scheme: dark) {
-        .stApp { background-color: #111827; }
-        h1 { background: -webkit-linear-gradient(45deg, #f3f4f6, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        div[data-testid="stMetric"], div[data-testid="stVerticalBlockBorderWrapper"] > div {
-            background-color: #1f2937;
-            border-color: #374151;
-        }
-        div[data-testid="stMetricLabel"] { color: #9ca3af; }
-        div[data-testid="stMetricValue"] { color: #f9fafb; }
-        thead tr th { background-color: #374151 !important; color: #e5e7eb !important; border-bottom: 1px solid #4b5563 !important; }
-        tbody tr td { border-bottom: 1px solid #374151 !important; color: #d1d5db; }
-        tbody tr:hover { background-color: #374151; }
-        table { border-color: #374151; }
-        button[kind="secondary"] { border-color: #4b5563; color: #e5e7eb; }
-        button[kind="secondary"]:hover { border-color: #6b7280; color: #ffffff; }
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# -----------------------------------------------------------------------------
 # 1. POŁĄCZENIE Z SUPABASE
 # -----------------------------------------------------------------------------
 try:
@@ -178,7 +34,7 @@ def init_connection():
 supabase: Client = init_connection()
 
 # -----------------------------------------------------------------------------
-# 2. FUNKCJE CRUD (Zmodernizowane powiadomienia)
+# 2. FUNKCJE CRUD
 # -----------------------------------------------------------------------------
 
 def handle_error(e):
@@ -268,12 +124,203 @@ def delete_product(prod_id):
 categories = get_data("kategorie", order_by="nazwa", ascending=True)
 products = get_products_with_categories()
 
-# --- NAGŁÓWEK I METRYKI ---
-# Używam columns, aby lepiej wypozycjonować tytuł
-col_h1, col_h2 = st.columns([0.7, 0.3])
+# --- NAGŁÓWEK I TRYB CIEMNY ---
+col_h1, col_h2 = st.columns([0.85, 0.15])
+
+with col_h2:
+    # Przełącznik trybu
+    dark_mode = st.toggle("🌙 Tryb ciemny", value=False)
+
 with col_h1:
     st.title("📦 System Magazynowy")
     st.caption("Panel zarządzania stanami i asortymentem")
+
+# -----------------------------------------------------------------------------
+# NOWOCZESNY DESIGN (CSS - Dynamiczny)
+# -----------------------------------------------------------------------------
+
+# Definicja kolorów w zależności od trybu
+if dark_mode:
+    colors = {
+        "bg": "#111827",
+        "text_main": "#f9fafb",
+        "text_sec": "#9ca3af",
+        "card_bg": "#1f2937",
+        "border": "#374151",
+        "gradient_text": "-webkit-linear-gradient(45deg, #f3f4f6, #9ca3af)",
+        "table_header_bg": "#374151",
+        "table_header_text": "#e5e7eb",
+        "table_row_border": "#374151",
+        "table_row_hover": "#374151",
+        "input_bg": "#1f2937",
+        "input_border": "#374151",
+        "btn_sec_border": "#4b5563",
+        "btn_sec_text": "#e5e7eb"
+    }
+else:
+    colors = {
+        "bg": "#fcfdfd",
+        "text_main": "#111827",
+        "text_sec": "#6b7280",
+        "card_bg": "#ffffff",
+        "border": "#e5e7eb",
+        "gradient_text": "-webkit-linear-gradient(45deg, #111827, #4b5563)",
+        "table_header_bg": "#f9fafb",
+        "table_header_text": "#374151",
+        "table_row_border": "#f3f4f6",
+        "table_row_hover": "#f9fafb",
+        "input_bg": "#ffffff",
+        "input_border": "#e5e7eb",
+        "btn_sec_border": "#e5e7eb",
+        "btn_sec_text": "#374151"
+    }
+
+st.markdown(f"""
+<style>
+    /* Import nowoczesnej czcionki */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {{
+        font-family: 'Inter', sans-serif;
+        color: {colors['text_main']};
+    }}
+
+    /* Tło aplikacji */
+    .stApp {{
+        background-color: {colors['bg']};
+    }}
+
+    /* Stylizacja nagłówka (Gradient Text) */
+    h1 {{
+        font-weight: 800 !important;
+        background: {colors['gradient_text']};
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding-bottom: 10px;
+    }}
+    
+    /* Caption text */
+    .stCaption {{
+        color: {colors['text_sec']} !important;
+    }}
+    
+    p, label {{
+        color: {colors['text_main']};
+    }}
+
+    /* Karty metryk (na górze) */
+    div[data-testid="stMetric"] {{
+        background-color: {colors['card_bg']};
+        border: 1px solid {colors['border']};
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }}
+    div[data-testid="stMetric"]:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }}
+    div[data-testid="stMetricLabel"] {{
+        font-size: 0.9rem;
+        color: {colors['text_sec']};
+    }}
+    div[data-testid="stMetricValue"] {{
+        font-weight: 700;
+        color: {colors['text_main']};
+    }}
+
+    /* Kontenery z obramowaniem (Formularze, Sekcje) */
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {{
+        background-color: {colors['card_bg']};
+        border-radius: 16px;
+        border: 1px solid {colors['border']};
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        padding: 20px;
+    }}
+
+    /* Nowoczesna tabela */
+    table {{
+        width: 100%;
+        border-collapse: separate; 
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid {colors['border']};
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        border-color: {colors['border']};
+    }}
+    
+    thead tr th {{
+        background-color: {colors['table_header_bg']} !important;
+        color: {colors['table_header_text']} !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.05em;
+        padding: 16px !important;
+        border-bottom: 1px solid {colors['border']} !important;
+    }}
+    
+    tbody tr td {{
+        padding: 14px 16px !important;
+        border-bottom: 1px solid {colors['table_row_border']} !important;
+        color: {colors['text_main']};
+        vertical-align: middle;
+    }}
+    
+    tbody tr:last-child td {{
+        border-bottom: none !important;
+    }}
+    
+    tbody tr:hover {{
+        background-color: {colors['table_row_hover']};
+    }}
+
+    /* Przyciski */
+    button[kind="primary"] {{
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        color: white !important;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s;
+    }}
+    button[kind="primary"]:hover {{
+        transform: scale(1.02);
+        box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.3);
+    }}
+    button[kind="secondary"] {{
+        border-radius: 8px;
+        border: 1px solid {colors['btn_sec_border']};
+        color: {colors['btn_sec_text']} !important;
+        background-color: transparent;
+    }}
+    button[kind="secondary"]:hover {{
+        border-color: {colors['text_sec']};
+    }}
+
+    /* Inputs */
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {{
+        border-radius: 8px;
+        border-color: {colors['input_border']};
+        background-color: {colors['input_bg']};
+        color: {colors['text_main']};
+    }}
+    .stTextInput input:focus, .stNumberInput input:focus {{
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }}
+    /* Dropdown menu items */
+    div[data-baseweb="popover"], div[data-baseweb="menu"] {{
+        background-color: {colors['card_bg']};
+    }}
+</style>
+""", unsafe_allow_html=True)
+
 
 # Obliczanie statystyk
 total_products = len(products)
