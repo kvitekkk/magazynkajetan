@@ -181,8 +181,14 @@ with tab_prod:
                     column_config={
                         "nazwa": st.column_config.TextColumn("Nazwa", width="medium"),
                         "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
-                        "liczba": st.column_config.ProgressColumn("Ilość", format="%d szt.", min_value=0, max_value=max([p.get('liczba', 100) for p in products])),
-                        "kategoria_nazwa": st.column_config.TagColumn("kategoria"),
+                        # Obliczamy max value bezpiecznie, nawet jeśli lista jest pusta lub ma zera
+                        "liczba": st.column_config.ProgressColumn(
+                            "Ilość", 
+                            format="%d szt.", 
+                            min_value=0, 
+                            max_value=max([p.get('liczba', 100) for p in products]) if products else 100
+                        ),
+                        "kategoria_nazwa": st.column_config.TextColumn("Kategoria"), # POPRAWIONO: TagColumn -> TextColumn
                     },
                     use_container_width=True,
                     hide_index=True
