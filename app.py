@@ -186,13 +186,28 @@ with tab_prod:
         with col_left:
             st.subheader("Stan magazynowy")
             if products:
-                # Przygotowanie DataFrame do wyświetlenia (wybór i zmiana nazw kolumn)
+                # Przygotowanie DataFrame
                 df = pd.DataFrame(products)
-                df_display = df[["nazwa", "cena", "liczba", "kategoria_nazwa"]].copy()
-                df_display.columns = ["Nazwa", "Cena", "Ilość", "Kategoria"]
                 
-                # Funkcja do tworzenia paska stanu (Progress Bar) za pomocą CSS Gradient
-                # Działa najlepiej z st.table, ponieważ st.dataframe często ignoruje gradienty
+                # Dodanie kolumny z łączną wartością (Cena * Ilość)
+                df["wartosc_calkowita"] = df["cena"] * df["liczba"]
+                
+                # Wybór i zmiana nazw kolumn do wyświetlenia
+                df_display = df[["nazwa", "cena", "liczba", "wartosc_calkowita", "kategoria_nazwa"]].copy()
+                df_display.columns = ["Nazwa", "Cena", "Ilość", "Wartość", "Kategoria"]
+                
+                # --- SORTOWANIE ---
+                # Dodajemy panel sortowania nad tabelą, bo st.table nie jest interaktywna
+                c_sort1, c_sort2 = st.columns([2, 1])
+                with c_sort1:
+                    sort_col = st.selectbox("Sortuj według:", df_display.columns, index=2) # Domyślnie "Ilość"
+                with c_sort2:
+                    sort_asc = st.toggle("Rosnąco", value=False) # Domyślnie malejąco (największe na górze)
+                
+                # Sortowanie danych
+                df_display = df_display.sort_values(by=sort_col, ascending=sort_asc)
+                
+                # --- STYLIZACJA (Pasek stanu) ---
                 def style_stock_levels(s):
                     max_val = max(s.max(), 1) if not s.empty and s.max() > 0 else 100
                     styles = []
@@ -200,7 +215,7 @@ with tab_prod:
                         ratio = val / max_val
                         percent = ratio * 100
                         
-                        # Dobór koloru: Czerwony < 25%, Żółty < 60%, Zielony reszta
+                        # Dobór koloru
                         if ratio < 0.25:
                             bar_color = "#ff4b4b" 
                         elif ratio < 0.60:
@@ -208,8 +223,7 @@ with tab_prod:
                         else:
                             bar_color = "#21c354"
                         
-                        # Gradient CSS: Kolor do X%, potem przezroczysty
-                        # Dodajemy też kolor tekstu czarny dla czytelności
+                        # Gradient CSS
                         style = f"""
                             background: linear-gradient(90deg, {bar_color} {percent:.1f}%, transparent {percent:.1f}%);
                             color: black;
@@ -218,13 +232,14 @@ with tab_prod:
                         styles.append(style)
                     return styles
 
-                # Formatowanie wartości (zł, szt.) i aplikowanie stylu
+                # Formatowanie wartości i aplikowanie stylu
                 styler = df_display.style.format({
                     "Cena": "{:.2f} zł",
+                    "Wartość": "{:.2f} zł",
                     "Ilość": "{:d} szt."
                 }).apply(style_stock_levels, subset=["Ilość"])
                 
-                # Używamy st.table zamiast st.dataframe, aby CSS (paski) na pewno zadziałał
+                # Wyświetlenie tabeli
                 st.table(styler)
                 
                 # --- OPERACJE NA PRODUKTACH ---
@@ -238,19 +253,29 @@ with tab_prod:
                     with st.container(border=True):
                         st.write("📉 **Wydaj towar (Zmniejsz stan)**")
                         with st.form("decrease_qty_form", clear_on_submit=True):
-                            p_update = st.selectbox(
+                            # Używamy posortowanej listy produktów w selectboxie, żeby było łatwiej znaleźć
+                            # Ale musimy odwołać się do oryginalnego słownika 'products' żeby mieć ID
+                            # Tworzymy mapę nazwa -> id z oryginalnych danych
+                            prod_map = {p['nazwa']: p for p in products}
+                            
+                            # Pobieramy listę nazw z wyświetlanej (posortowanej) tabeli
+                            sorted_names = df_display["Nazwa"].tolist()
+                            
+                            # Wybieramy produkt z listy posortowanej
+                            selected_prod_name = st.selectbox(
                                 "Wybierz produkt", 
-                                products, 
-                                format_func=lambda x: f"{x['nazwa']} (Stan: {x['liczba']} szt.)",
-                                key="sel_update"
+                                sorted_names, 
+                                key="sel_update_name"
                             )
+                            
                             qty_to_remove = st.number_input("Ile sztuk wydać/usunąć?", min_value=1, step=1, value=1)
                             
                             if st.form_submit_button("Zatwierdź zmianę", use_container_width=True):
-                                current_qty = p_update['liczba']
+                                p_data = prod_map[selected_prod_name]
+                                current_qty = p_data['liczba']
                                 if current_qty >= qty_to_remove:
                                     new_qty = current_qty - qty_to_remove
-                                    if update_product_quantity(p_update['id'], new_qty):
+                                    if update_product_quantity(p_data['id'], new_qty):
                                         time.sleep(1)
                                         st.rerun()
                                 else:
@@ -260,19 +285,22 @@ with tab_prod:
                 with op_col2:
                     with st.container(border=True):
                         st.write("🗑️ **Usuń produkt z bazy**")
-                        # Formularz tylko do wyboru (button musi być poza formem żeby nie czyścić selectboxa przed akcją)
-                        p_delete = st.selectbox(
+                        
+                        # Podobnie jak wyżej, używamy posortowanej listy nazw
+                        selected_del_name = st.selectbox(
                             "Produkt do usunięcia", 
-                            products, 
-                            format_func=lambda x: f"{x['nazwa']}",
-                            key="sel_delete",
-                            label_visibility="visible"
+                            df_display["Nazwa"].tolist(),
+                            key="sel_delete_name"
                         )
+                        
                         st.warning("Tej operacji nie można cofnąć.")
                         if st.button("Usuń trwale", type="primary", use_container_width=True):
-                            if delete_product(p_delete['id']):
-                                time.sleep(1)
-                                st.rerun()
+                            # Pobieramy ID na podstawie nazwy
+                            prod_id_to_del = next((p['id'] for p in products if p['nazwa'] == selected_del_name), None)
+                            if prod_id_to_del:
+                                if delete_product(prod_id_to_del):
+                                    time.sleep(1)
+                                    st.rerun()
 
             else:
                 st.info("Magazyn jest pusty.")
