@@ -13,30 +13,146 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS dla lepszego wyglądu (kafelki metryk)
+# -----------------------------------------------------------------------------
+# NOWOCZESNY DESIGN (CSS)
+# -----------------------------------------------------------------------------
 st.markdown("""
 <style>
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
+    /* Import nowoczesnej czcionki */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
     }
+
+    /* Tło aplikacji */
+    .stApp {
+        background-color: #fcfdfd;
+    }
+
+    /* Stylizacja nagłówka (Gradient Text) */
+    h1 {
+        font-weight: 800 !important;
+        background: -webkit-linear-gradient(45deg, #111827, #4b5563);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding-bottom: 10px;
+    }
+
+    /* Karty metryk (na górze) */
     div[data-testid="stMetric"] {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid #dee2e6;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    /* Wsparcie dla trybu ciemnego */
-    @media (prefers-color-scheme: dark) {
-        div[data-testid="stMetric"] {
-            background-color: #262730;
-            border: 1px solid #41424b;
-        }
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
     }
-    /* Stylizacja tabeli statycznej */
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.9rem;
+        color: #6b7280;
+    }
+    div[data-testid="stMetricValue"] {
+        font-weight: 700;
+        color: #111827;
+    }
+
+    /* Kontenery z obramowaniem (Formularze, Sekcje) */
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        background-color: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        padding: 20px;
+    }
+
+    /* Nowoczesna tabela */
     table {
         width: 100%;
+        border-collapse: separate; 
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+    
+    thead tr th {
+        background-color: #f9fafb !important;
+        color: #374151 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.05em;
+        padding: 16px !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    tbody tr td {
+        padding: 14px 16px !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        color: #1f2937;
+        vertical-align: middle;
+    }
+    
+    tbody tr:last-child td {
+        border-bottom: none !important;
+    }
+    
+    tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Przyciski */
+    button[kind="primary"] {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s;
+    }
+    button[kind="primary"]:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.3);
+    }
+    button[kind="secondary"] {
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* Inputs */
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
+        border-radius: 8px;
+        border-color: #e5e7eb;
+    }
+    .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Dark Mode Support overrides */
+    @media (prefers-color-scheme: dark) {
+        .stApp { background-color: #111827; }
+        h1 { background: -webkit-linear-gradient(45deg, #f3f4f6, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        div[data-testid="stMetric"], div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+        div[data-testid="stMetricLabel"] { color: #9ca3af; }
+        div[data-testid="stMetricValue"] { color: #f9fafb; }
+        thead tr th { background-color: #374151 !important; color: #e5e7eb !important; border-bottom: 1px solid #4b5563 !important; }
+        tbody tr td { border-bottom: 1px solid #374151 !important; color: #d1d5db; }
+        tbody tr:hover { background-color: #374151; }
+        table { border-color: #374151; }
+        button[kind="secondary"] { border-color: #4b5563; color: #e5e7eb; }
+        button[kind="secondary"]:hover { border-color: #6b7280; color: #ffffff; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -153,10 +269,11 @@ categories = get_data("kategorie", order_by="nazwa", ascending=True)
 products = get_products_with_categories()
 
 # --- NAGŁÓWEK I METRYKI ---
-col_title, col_logo = st.columns([3, 1])
-with col_title:
+# Używam columns, aby lepiej wypozycjonować tytuł
+col_h1, col_h2 = st.columns([0.7, 0.3])
+with col_h1:
     st.title("📦 System Magazynowy")
-    st.markdown("Zarządzaj swoim asortymentem w czasie rzeczywistym.")
+    st.caption("Panel zarządzania stanami i asortymentem")
 
 # Obliczanie statystyk
 total_products = len(products)
@@ -165,11 +282,11 @@ total_value = sum([p.get('cena', 0) * p.get('liczba', 0) for p in products]) if 
 
 # Wyświetlanie metryk w ładnych kafelkach
 m1, m2, m3 = st.columns(3)
-m1.metric("Liczba Produktów", total_products, border=True)
-m2.metric("Wartość Magazynu", f"{total_value:,.2f} zł", border=True)
-m3.metric("Kategorie", total_categories, border=True)
+m1.metric("Liczba Produktów", total_products)
+m2.metric("Wartość Magazynu", f"{total_value:,.2f} zł")
+m3.metric("Kategorie", total_categories)
 
-st.markdown("---")
+st.markdown("<div style='margin-bottom: 30px'></div>", unsafe_allow_html=True) # Odstęp
 
 # --- GŁÓWNA ZAWARTOŚĆ ---
 tab_prod, tab_cat = st.tabs(["🛒 Zarządzanie Produktami", "📂 Konfiguracja Kategorii"])
@@ -180,7 +297,7 @@ with tab_prod:
         st.warning("⚠️ Aby rozpocząć, dodaj pierwszą kategorię w zakładce 'Konfiguracja Kategorii'.")
     else:
         # Layout: Dwie kolumny (Tabela po lewej, Dodawanie po prawej)
-        col_left, col_right = st.columns([2, 1], gap="large")
+        col_left, col_right = st.columns([0.65, 0.35], gap="large")
 
         # --- SEKCJA: LISTA PRODUKTÓW ---
         with col_left:
@@ -197,13 +314,15 @@ with tab_prod:
                 df_display.columns = ["Nazwa", "Cena", "Ilość", "Wartość", "Kategoria"]
                 
                 # --- SORTOWANIE ---
-                # Dodajemy panel sortowania nad tabelą, bo st.table nie jest interaktywna
-                c_sort1, c_sort2 = st.columns([2, 1])
-                with c_sort1:
-                    sort_col = st.selectbox("Sortuj według:", df_display.columns, index=2) # Domyślnie "Ilość"
-                with c_sort2:
-                    sort_asc = st.toggle("Rosnąco", value=False) # Domyślnie malejąco (największe na górze)
+                with st.container():
+                    c_sort1, c_sort2 = st.columns([3, 1])
+                    with c_sort1:
+                        sort_col = st.selectbox("Sortuj według:", df_display.columns, index=2, label_visibility="collapsed") 
+                    with c_sort2:
+                        sort_asc = st.toggle("Rosnąco", value=False)
                 
+                st.markdown("<div style='margin-bottom: 10px'></div>", unsafe_allow_html=True)
+
                 # Sortowanie danych
                 df_display = df_display.sort_values(by=sort_col, ascending=sort_asc)
                 
@@ -215,19 +334,20 @@ with tab_prod:
                         ratio = val / max_val
                         percent = ratio * 100
                         
-                        # Dobór koloru
+                        # Dobór koloru: Nowoczesna paleta
                         if ratio < 0.25:
-                            bar_color = "#ff4b4b" 
+                            bar_color = "rgba(239, 68, 68, 0.4)" # Czerwony (transparentny)
                         elif ratio < 0.60:
-                            bar_color = "#ffa421"
+                            bar_color = "rgba(245, 158, 11, 0.4)" # Pomarańczowy
                         else:
-                            bar_color = "#21c354"
+                            bar_color = "rgba(16, 185, 129, 0.4)" # Szmaragdowy
                         
-                        # Gradient CSS
+                        # Gradient CSS - delikatniejszy
                         style = f"""
                             background: linear-gradient(90deg, {bar_color} {percent:.1f}%, transparent {percent:.1f}%);
-                            color: black;
+                            color: inherit;
                             font-weight: 500;
+                            border-radius: 4px;
                         """
                         styles.append(style)
                     return styles
@@ -243,59 +363,58 @@ with tab_prod:
                 st.table(styler)
                 
                 # --- OPERACJE NA PRODUKTACH ---
-                st.divider()
-                st.subheader("Operacje")
+                st.markdown("### ⚡ Szybkie akcje")
                 
                 op_col1, op_col2 = st.columns(2, gap="medium")
                 
                 # 1. Zmniejszanie stanu (Wydawanie towaru)
                 with op_col1:
                     with st.container(border=True):
-                        st.write("📉 **Wydaj towar (Zmniejsz stan)**")
+                        st.markdown("**📉 Wydanie towaru**")
                         with st.form("decrease_qty_form", clear_on_submit=True):
-                            # Używamy posortowanej listy produktów w selectboxie, żeby było łatwiej znaleźć
-                            # Ale musimy odwołać się do oryginalnego słownika 'products' żeby mieć ID
-                            # Tworzymy mapę nazwa -> id z oryginalnych danych
                             prod_map = {p['nazwa']: p for p in products}
-                            
-                            # Pobieramy listę nazw z wyświetlanej (posortowanej) tabeli
                             sorted_names = df_display["Nazwa"].tolist()
                             
-                            # Wybieramy produkt z listy posortowanej
                             selected_prod_name = st.selectbox(
                                 "Wybierz produkt", 
                                 sorted_names, 
-                                key="sel_update_name"
+                                key="sel_update_name",
+                                label_visibility="collapsed",
+                                placeholder="Wybierz produkt..."
                             )
                             
-                            qty_to_remove = st.number_input("Ile sztuk wydać/usunąć?", min_value=1, step=1, value=1)
+                            st.caption("Liczba sztuk do zdjęcia ze stanu:")
+                            qty_to_remove = st.number_input("Ilość", min_value=1, step=1, value=1, label_visibility="collapsed")
                             
-                            if st.form_submit_button("Zatwierdź zmianę", use_container_width=True):
-                                p_data = prod_map[selected_prod_name]
-                                current_qty = p_data['liczba']
-                                if current_qty >= qty_to_remove:
-                                    new_qty = current_qty - qty_to_remove
-                                    if update_product_quantity(p_data['id'], new_qty):
-                                        time.sleep(1)
-                                        st.rerun()
+                            if st.form_submit_button("Zatwierdź wydanie", use_container_width=True):
+                                if selected_prod_name:
+                                    p_data = prod_map[selected_prod_name]
+                                    current_qty = p_data['liczba']
+                                    if current_qty >= qty_to_remove:
+                                        new_qty = current_qty - qty_to_remove
+                                        if update_product_quantity(p_data['id'], new_qty):
+                                            time.sleep(1)
+                                            st.rerun()
+                                    else:
+                                        st.error(f"Błąd: Tylko {current_qty} szt. na stanie!")
                                 else:
-                                    st.error(f"Błąd: Na stanie masz tylko {current_qty} szt.!")
+                                    st.warning("Wybierz produkt.")
 
                 # 2. Usuwanie całkowite
                 with op_col2:
                     with st.container(border=True):
-                        st.write("🗑️ **Usuń produkt z bazy**")
+                        st.markdown("**🗑️ Usuwanie z bazy**")
                         
-                        # Podobnie jak wyżej, używamy posortowanej listy nazw
                         selected_del_name = st.selectbox(
                             "Produkt do usunięcia", 
                             df_display["Nazwa"].tolist(),
-                            key="sel_delete_name"
+                            key="sel_delete_name",
+                            label_visibility="collapsed"
                         )
                         
-                        st.warning("Tej operacji nie można cofnąć.")
-                        if st.button("Usuń trwale", type="primary", use_container_width=True):
-                            # Pobieramy ID na podstawie nazwy
+                        st.markdown("<div style='margin-bottom: 37px'></div>", unsafe_allow_html=True) # Wyrównanie wysokości
+                        
+                        if st.button("Usuń trwale produkt", type="secondary", use_container_width=True):
                             prod_id_to_del = next((p['id'] for p in products if p['nazwa'] == selected_del_name), None)
                             if prod_id_to_del:
                                 if delete_product(prod_id_to_del):
@@ -307,10 +426,10 @@ with tab_prod:
 
         # --- SEKCJA: FORMULARZ DODAWANIA ---
         with col_right:
-            st.success("➕ Dodaj nowy towar")  # Używamy success jako nagłówka kontenera
             with st.container(border=True):
+                st.subheader("➕ Nowy towar")
                 with st.form("add_prod_form", clear_on_submit=True):
-                    f_nazwa = st.text_input("Nazwa produktu", placeholder="np. Opony zimowe")
+                    f_nazwa = st.text_input("Nazwa", placeholder="np. Opony zimowe")
                     
                     cat_map = {c['nazwa']: c['id'] for c in categories}
                     f_kat = st.selectbox("Kategoria", list(cat_map.keys()))
@@ -319,7 +438,8 @@ with tab_prod:
                     f_cena = c1.number_input("Cena (zł)", min_value=0.01, step=0.01)
                     f_liczba = c2.number_input("Ilość (szt.)", min_value=1, step=1, value=1)
                     
-                    submitted = st.form_submit_button("Zatwierdź", use_container_width=True)
+                    st.markdown("---")
+                    submitted = st.form_submit_button("Dodaj do magazynu", type="primary", use_container_width=True)
                     
                     if submitted:
                         if not f_nazwa:
@@ -339,7 +459,7 @@ with tab_prod:
 with tab_cat:
     st.markdown("### 🏷️ Zarządzaj kategoriami")
     
-    col_c1, col_c2 = st.columns(2, gap="large")
+    col_c1, col_c2 = st.columns([0.6, 0.4], gap="large")
     
     with col_c1:
         st.info("Lista dostępnych kategorii")
@@ -347,7 +467,7 @@ with tab_cat:
             for cat in categories:
                 # Wyświetlanie każdej kategorii w ładnym rzędzie
                 with st.container(border=True):
-                    c_row1, c_row2 = st.columns([4, 1])
+                    c_row1, c_row2 = st.columns([0.85, 0.15])
                     c_row1.markdown(f"**{cat['nazwa']}**")
                     if c_row2.button("🗑️", key=f"del_c_{cat['id']}", help="Usuń kategorię"):
                         if delete_category(cat['id']):
@@ -357,13 +477,15 @@ with tab_cat:
             st.write("Brak kategorii.")
 
     with col_c2:
-        with st.form("add_cat_form", clear_on_submit=True):
-            st.write("Nowa kategoria")
-            new_cat_name = st.text_input("Nazwa", placeholder="np. Elektronika", label_visibility="collapsed")
-            if st.form_submit_button("Dodaj kategorię", use_container_width=True):
-                if new_cat_name:
-                    if add_category(new_cat_name):
-                        time.sleep(1)
-                        st.rerun()
-                else:
-                    st.error("Nazwa nie może być pusta.")
+        with st.container(border=True):
+            st.write("**Dodaj nową kategorię**")
+            with st.form("add_cat_form", clear_on_submit=True):
+                new_cat_name = st.text_input("Nazwa", placeholder="np. Elektronika", label_visibility="collapsed")
+                submitted_cat = st.form_submit_button("Zapisz", type="primary", use_container_width=True)
+                if submitted_cat:
+                    if new_cat_name:
+                        if add_category(new_cat_name):
+                            time.sleep(1)
+                            st.rerun()
+                    else:
+                        st.error("Nazwa nie może być pusta.")
