@@ -152,19 +152,19 @@ with col_h1:
 # Definicja kolorów w zależności od trybu
 if dark_mode:
     colors = {
-        "bg": "#0e1117",  # Głęboka czerń
-        "text_main": "#ffffff", # CZYSTA BIEL
-        "text_sec": "#e5e7eb", # Bardzo jasny szary
-        "card_bg": "#161b22",
-        "border": "#30363d", 
-        "gradient_text": "-webkit-linear-gradient(45deg, #ffffff, #e5e7eb)", # Biały gradient
-        "table_header_bg": "#161b22",
+        "bg": "#262626",  # Neutralny, ciemny szary (zamiast czerni)
+        "text_main": "#ffffff", # Czysta biel
+        "text_sec": "#d4d4d4", # Jasny szary
+        "card_bg": "#333333", # Nieco jaśniejszy szary dla kart
+        "border": "#404040", # Subtelne ramki
+        "gradient_text": "-webkit-linear-gradient(45deg, #ffffff, #d4d4d4)",
+        "table_header_bg": "#333333",
         "table_header_text": "#ffffff",
-        "table_row_border": "#30363d",
-        "table_row_hover": "#21262d",
-        "input_bg": "#0d1117",
-        "input_border": "#30363d",
-        "btn_sec_border": "#30363d",
+        "table_row_border": "#404040",
+        "table_row_hover": "#3a3a3a",
+        "input_bg": "#1f1f1f", # Ciemniejszy input dla kontrastu
+        "input_border": "#404040",
+        "btn_sec_border": "#404040",
         "btn_sec_text": "#ffffff"
     }
 else:
