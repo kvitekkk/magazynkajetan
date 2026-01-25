@@ -107,6 +107,16 @@ def update_product_quantity(product_id, new_quantity):
         handle_error(e)
         return False
 
+def update_product_price(product_id, new_price):
+    """Aktualizuje cenę produktu"""
+    try:
+        supabase.table("produkty").update({"cena": new_price}).eq("id", product_id).execute()
+        st.toast(f"✅ Zaktualizowano cenę", icon="💰")
+        return True
+    except Exception as e:
+        handle_error(e)
+        return False
+
 def delete_product(prod_id):
     try:
         supabase.table("produkty").delete().eq("id", prod_id).execute()
@@ -144,7 +154,7 @@ if dark_mode:
     colors = {
         "bg": "#0e1117",  # Głęboka czerń
         "text_main": "#ffffff", # CZYSTA BIEL
-        "text_sec": "#e5e7eb", # Bardzo jasny szary (prawie biały)
+        "text_sec": "#e5e7eb", # Bardzo jasny szary
         "card_bg": "#161b22",
         "border": "#30363d", 
         "gradient_text": "-webkit-linear-gradient(45deg, #ffffff, #e5e7eb)", # Biały gradient
@@ -425,37 +435,37 @@ with tab_prod:
                 # --- OPERACJE NA PRODUKTACH ---
                 st.markdown("### ⚡ Szybkie akcje")
                 
-                op_col1, op_col2 = st.columns(2, gap="medium")
+                # Dzielimy na 3 kolumny: Stan, Cena, Usuwanie
+                op_col1, op_col2, op_col3 = st.columns(3, gap="small")
                 
-                # 1. Aktualizacja stanu (Przyjęcie / Wydanie)
+                # 1. Aktualizacja stanu
                 with op_col1:
                     with st.container(border=True):
-                        st.markdown("**🔄 Aktualizacja stanu**")
+                        st.markdown("**🔄 Zmiana stanu**")
                         with st.form("update_qty_form", clear_on_submit=True):
                             prod_map = {p['nazwa']: p for p in products}
                             sorted_names = df_display["Nazwa"].tolist()
                             
                             selected_prod_name = st.selectbox(
-                                "Wybierz produkt", 
+                                "Produkt", 
                                 sorted_names, 
-                                key="sel_update_name",
+                                key="sel_update_qty",
                                 label_visibility="collapsed",
-                                placeholder="Wybierz produkt..."
+                                placeholder="Wybierz..."
                             )
                             
-                            st.caption("Wybierz operację i ilość:")
-                            col_opt, col_qty = st.columns([0.6, 0.4])
+                            col_opt, col_qty = st.columns([0.5, 0.5])
                             with col_opt:
-                                operation = st.radio("Operacja", ["Dodaj (+)", "Odejmij (-)"], horizontal=True, label_visibility="collapsed")
+                                operation = st.radio("Akcja", ["(+)", "(-)"], horizontal=True, label_visibility="collapsed")
                             with col_qty:
                                 qty_input = st.number_input("Ilość", min_value=1, step=1, value=1, label_visibility="collapsed")
                             
-                            if st.form_submit_button("Zatwierdź zmianę", use_container_width=True):
+                            if st.form_submit_button("Zmień stan", use_container_width=True):
                                 if selected_prod_name:
                                     p_data = prod_map[selected_prod_name]
                                     current_qty = p_data['liczba']
                                     
-                                    if operation == "Dodaj (+)":
+                                    if operation == "(+)":
                                         new_qty = current_qty + qty_input
                                         if update_product_quantity(p_data['id'], new_qty):
                                             time.sleep(1)
@@ -467,25 +477,53 @@ with tab_prod:
                                                 time.sleep(1)
                                                 st.rerun()
                                         else:
-                                            st.error(f"Błąd: Tylko {current_qty} szt. na stanie!")
+                                            st.error(f"Tylko {current_qty} szt.!")
                                 else:
                                     st.warning("Wybierz produkt.")
 
-                # 2. Usuwanie całkowite
+                # 2. Aktualizacja Ceny (NOWE)
                 with op_col2:
                     with st.container(border=True):
-                        st.markdown("**🗑️ Usuwanie z bazy**")
+                        st.markdown("**💰 Zmiana ceny**")
+                        with st.form("update_price_form", clear_on_submit=True):
+                            # Używamy tej samej listy posortowanej
+                            selected_price_name = st.selectbox(
+                                "Produkt", 
+                                df_display["Nazwa"].tolist(),
+                                key="sel_update_price",
+                                label_visibility="collapsed",
+                                placeholder="Wybierz..."
+                            )
+                            
+                            new_price_input = st.number_input("Nowa cena (zł)", min_value=0.01, step=0.01, label_visibility="collapsed")
+                            
+                            if st.form_submit_button("Ustaw cenę", use_container_width=True):
+                                if selected_price_name:
+                                    # Znajdź ID produktu
+                                    prod_id = next((p['id'] for p in products if p['nazwa'] == selected_price_name), None)
+                                    if prod_id:
+                                        if update_product_price(prod_id, new_price_input):
+                                            time.sleep(1)
+                                            st.rerun()
+                                else:
+                                    st.warning("Wybierz produkt.")
+
+                # 3. Usuwanie całkowite
+                with op_col3:
+                    with st.container(border=True):
+                        st.markdown("**🗑️ Usuń z bazy**")
                         
                         selected_del_name = st.selectbox(
-                            "Produkt do usunięcia", 
+                            "Produkt", 
                             df_display["Nazwa"].tolist(),
                             key="sel_delete_name",
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
+                            placeholder="Wybierz..."
                         )
                         
-                        st.markdown("<div style='margin-bottom: 37px'></div>", unsafe_allow_html=True) # Wyrównanie wysokości
+                        st.markdown("<div style='margin-bottom: 38px'></div>", unsafe_allow_html=True) # Wyrównanie wysokości
                         
-                        if st.button("Usuń trwale produkt", type="secondary", use_container_width=True):
+                        if st.button("Usuń trwale", type="secondary", use_container_width=True):
                             prod_id_to_del = next((p['id'] for p in products if p['nazwa'] == selected_del_name), None)
                             if prod_id_to_del:
                                 if delete_product(prod_id_to_del):
