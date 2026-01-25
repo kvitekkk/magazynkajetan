@@ -367,11 +367,11 @@ with tab_prod:
                 
                 op_col1, op_col2 = st.columns(2, gap="medium")
                 
-                # 1. Zmniejszanie stanu (Wydawanie towaru)
+                # 1. Aktualizacja stanu (Przyjęcie / Wydanie)
                 with op_col1:
                     with st.container(border=True):
-                        st.markdown("**📉 Wydanie towaru**")
-                        with st.form("decrease_qty_form", clear_on_submit=True):
+                        st.markdown("**🔄 Aktualizacja stanu**")
+                        with st.form("update_qty_form", clear_on_submit=True):
                             prod_map = {p['nazwa']: p for p in products}
                             sorted_names = df_display["Nazwa"].tolist()
                             
@@ -383,20 +383,31 @@ with tab_prod:
                                 placeholder="Wybierz produkt..."
                             )
                             
-                            st.caption("Liczba sztuk do zdjęcia ze stanu:")
-                            qty_to_remove = st.number_input("Ilość", min_value=1, step=1, value=1, label_visibility="collapsed")
+                            st.caption("Wybierz operację i ilość:")
+                            col_opt, col_qty = st.columns([0.6, 0.4])
+                            with col_opt:
+                                operation = st.radio("Operacja", ["Dodaj (+)", "Odejmij (-)"], horizontal=True, label_visibility="collapsed")
+                            with col_qty:
+                                qty_input = st.number_input("Ilość", min_value=1, step=1, value=1, label_visibility="collapsed")
                             
-                            if st.form_submit_button("Zatwierdź wydanie", use_container_width=True):
+                            if st.form_submit_button("Zatwierdź zmianę", use_container_width=True):
                                 if selected_prod_name:
                                     p_data = prod_map[selected_prod_name]
                                     current_qty = p_data['liczba']
-                                    if current_qty >= qty_to_remove:
-                                        new_qty = current_qty - qty_to_remove
+                                    
+                                    if operation == "Dodaj (+)":
+                                        new_qty = current_qty + qty_input
                                         if update_product_quantity(p_data['id'], new_qty):
                                             time.sleep(1)
                                             st.rerun()
-                                    else:
-                                        st.error(f"Błąd: Tylko {current_qty} szt. na stanie!")
+                                    else: # Odejmij
+                                        if current_qty >= qty_input:
+                                            new_qty = current_qty - qty_input
+                                            if update_product_quantity(p_data['id'], new_qty):
+                                                time.sleep(1)
+                                                st.rerun()
+                                        else:
+                                            st.error(f"Błąd: Tylko {current_qty} szt. na stanie!")
                                 else:
                                     st.warning("Wybierz produkt.")
 
