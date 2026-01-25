@@ -184,20 +184,39 @@ with tab_prod:
             if products:
                 df = pd.DataFrame(products)
                 
-                # Konfiguracja wyświetlania tabeli
+                # Funkcja do kolorowania wierszy na podstawie stanu magazynowego
+                def style_stock_levels(s):
+                    # Obliczamy maksymalną wartość w kolumnie (dla skali)
+                    # Jeśli brak produktów, przyjmujemy 100 jako bazę
+                    max_val = s.max() if not s.empty and s.max() > 0 else 100
+                    
+                    colors = []
+                    for val in s:
+                        ratio = val / max_val
+                        if ratio < 0.25:
+                            # Czerwony tło (krytyczny stan)
+                            colors.append("background-color: #ffcccc; color: #990000;")
+                        elif ratio < 0.60:
+                            # Żółty/Pomarańczowy tło (średni stan)
+                            colors.append("background-color: #fff3cd; color: #856404;")
+                        else:
+                            # Zielony tło (dobry stan)
+                            colors.append("background-color: #d4edda; color: #155724;")
+                    return colors
+
+                # Aplikujemy style do DataFrame (Pandas Styler)
+                # Apply działa na kolumnę 'liczba'
+                styler = df.style.apply(style_stock_levels, subset=["liczba"])
+                
+                # Konfiguracja wyświetlania tabeli ze stylami
                 st.dataframe(
-                    df,
+                    styler,
                     column_order=("nazwa", "cena", "liczba", "kategoria_nazwa"),
                     column_config={
                         "nazwa": st.column_config.TextColumn("Nazwa", width="medium"),
                         "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
-                        # Obliczamy max value bezpiecznie
-                        "liczba": st.column_config.ProgressColumn(
-                            "Ilość", 
-                            format="%d szt.", 
-                            min_value=0, 
-                            max_value=max([p.get('liczba', 100) for p in products]) if products else 100
-                        ),
+                        # Zmieniamy ProgressColumn na NumberColumn, bo kolory załatwia Styler
+                        "liczba": st.column_config.NumberColumn("Ilość", format="%d szt."),
                         "kategoria_nazwa": st.column_config.TextColumn("Kategoria"),
                     },
                     use_container_width=True,
