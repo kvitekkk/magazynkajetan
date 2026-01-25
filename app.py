@@ -142,20 +142,20 @@ with col_h1:
 # Definicja kolorów w zależności od trybu
 if dark_mode:
     colors = {
-        "bg": "#111827",
-        "text_main": "#f9fafb",
-        "text_sec": "#9ca3af",
-        "card_bg": "#1f2937",
-        "border": "#374151",
-        "gradient_text": "-webkit-linear-gradient(45deg, #f3f4f6, #9ca3af)",
-        "table_header_bg": "#374151",
-        "table_header_text": "#e5e7eb",
-        "table_row_border": "#374151",
-        "table_row_hover": "#374151",
-        "input_bg": "#1f2937",
-        "input_border": "#374151",
-        "btn_sec_border": "#4b5563",
-        "btn_sec_text": "#e5e7eb"
+        "bg": "#0e1117",  # Głęboka czerń (GitHub Dark style)
+        "text_main": "#f0f6fc", # Jasny biały/szary
+        "text_sec": "#8b949e", # Stonowany szary
+        "card_bg": "#161b22", # Ciemnoszary dla kart
+        "border": "#30363d", # Wyraźne ramki
+        "gradient_text": "-webkit-linear-gradient(45deg, #f0f6fc, #8b949e)",
+        "table_header_bg": "#161b22",
+        "table_header_text": "#f0f6fc",
+        "table_row_border": "#30363d",
+        "table_row_hover": "#21262d",
+        "input_bg": "#0d1117", # Kontrastowe tło inputów
+        "input_border": "#30363d",
+        "btn_sec_border": "#30363d",
+        "btn_sec_text": "#c9d1d9"
     }
 else:
     colors = {
@@ -301,9 +301,10 @@ st.markdown(f"""
     }}
     button[kind="secondary"]:hover {{
         border-color: {colors['text_sec']};
+        color: {colors['text_main']} !important;
     }}
 
-    /* Inputs */
+    /* Inputs & Selects */
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {{
         border-radius: 8px;
         border-color: {colors['input_border']};
@@ -314,10 +315,18 @@ st.markdown(f"""
         border-color: #2563eb;
         box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }}
-    /* Dropdown menu items */
-    div[data-baseweb="popover"], div[data-baseweb="menu"] {{
-        background-color: {colors['card_bg']};
+    
+    /* Poprawa widoczności w dropdownach (Selectbox) w trybie ciemnym */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {{
+        background-color: {colors['card_bg']} !important;
     }}
+    li[data-baseweb="option"] {{
+        color: {colors['text_main']} !important;
+    }}
+    div[data-baseweb="select"] span {{
+        color: {colors['text_main']} !important;
+    }}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -381,13 +390,16 @@ with tab_prod:
                         ratio = val / max_val
                         percent = ratio * 100
                         
-                        # Dobór koloru: Nowoczesna paleta
+                        # Dobór koloru: Nowoczesna paleta (Dostosowana do trybu)
+                        # W trybie ciemnym używamy wyższej przezroczystości (0.7), żeby kolor był widoczny
+                        alpha = "0.7" if dark_mode else "0.4"
+                        
                         if ratio < 0.25:
-                            bar_color = "rgba(239, 68, 68, 0.4)" # Czerwony (transparentny)
+                            bar_color = f"rgba(239, 68, 68, {alpha})" # Czerwony
                         elif ratio < 0.60:
-                            bar_color = "rgba(245, 158, 11, 0.4)" # Pomarańczowy
+                            bar_color = f"rgba(245, 158, 11, {alpha})" # Pomarańczowy
                         else:
-                            bar_color = "rgba(16, 185, 129, 0.4)" # Szmaragdowy
+                            bar_color = f"rgba(16, 185, 129, {alpha})" # Szmaragdowy
                         
                         # Gradient CSS - delikatniejszy
                         style = f"""
