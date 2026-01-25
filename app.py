@@ -34,6 +34,10 @@ st.markdown("""
             border: 1px solid #41424b;
         }
     }
+    /* Stylizacja tabeli statycznej */
+    table {
+        width: 100%;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -182,50 +186,46 @@ with tab_prod:
         with col_left:
             st.subheader("Stan magazynowy")
             if products:
+                # Przygotowanie DataFrame do wyświetlenia (wybór i zmiana nazw kolumn)
                 df = pd.DataFrame(products)
+                df_display = df[["nazwa", "cena", "liczba", "kategoria_nazwa"]].copy()
+                df_display.columns = ["Nazwa", "Cena", "Ilość", "Kategoria"]
                 
                 # Funkcja do tworzenia paska stanu (Progress Bar) za pomocą CSS Gradient
+                # Działa najlepiej z st.table, ponieważ st.dataframe często ignoruje gradienty
                 def style_stock_levels(s):
-                    # Obliczamy maksymalną wartość w kolumnie (dla skali 100%)
                     max_val = max(s.max(), 1) if not s.empty and s.max() > 0 else 100
-                    
                     styles = []
                     for val in s:
-                        # Obliczamy procent zapełnienia paska
                         ratio = val / max_val
                         percent = ratio * 100
                         
-                        # Dobór koloru w zależności od stanu magazynowego
+                        # Dobór koloru: Czerwony < 25%, Żółty < 60%, Zielony reszta
                         if ratio < 0.25:
-                            bar_color = "#ff4b4b" # Czerwony (niski stan)
+                            bar_color = "#ff4b4b" 
                         elif ratio < 0.60:
-                            bar_color = "#ffa421" # Żółty/Pomarańczowy (średni stan)
+                            bar_color = "#ffa421"
                         else:
-                            bar_color = "#21c354" # Zielony (wysoki stan)
-                            
-                        # Tworzymy gradient CSS, który wygląda jak pasek postępu w tle komórki
-                        # Składnia: linear-gradient(90deg, KOLOR X%, PRZEZROCZYSTY X%)
-                        # "transparent" sprawia, że reszta komórki ma standardowe tło
-                        style = f"background: linear-gradient(90deg, {bar_color} {percent:.1f}%, transparent {percent:.1f}%); padding-left: 5px;"
+                            bar_color = "#21c354"
+                        
+                        # Gradient CSS: Kolor do X%, potem przezroczysty
+                        # Dodajemy też kolor tekstu czarny dla czytelności
+                        style = f"""
+                            background: linear-gradient(90deg, {bar_color} {percent:.1f}%, transparent {percent:.1f}%);
+                            color: black;
+                            font-weight: 500;
+                        """
                         styles.append(style)
                     return styles
 
-                # Aplikujemy style do DataFrame (Pandas Styler)
-                styler = df.style.apply(style_stock_levels, subset=["liczba"])
+                # Formatowanie wartości (zł, szt.) i aplikowanie stylu
+                styler = df_display.style.format({
+                    "Cena": "{:.2f} zł",
+                    "Ilość": "{:d} szt."
+                }).apply(style_stock_levels, subset=["Ilość"])
                 
-                # Konfiguracja wyświetlania tabeli ze stylami
-                st.dataframe(
-                    styler,
-                    column_order=("nazwa", "cena", "liczba", "kategoria_nazwa"),
-                    column_config={
-                        "nazwa": st.column_config.TextColumn("Nazwa", width="medium"),
-                        "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
-                        "liczba": st.column_config.NumberColumn("Ilość", format="%d szt."),
-                        "kategoria_nazwa": st.column_config.TextColumn("Kategoria"),
-                    },
-                    use_container_width=True,
-                    hide_index=True
-                )
+                # Używamy st.table zamiast st.dataframe, aby CSS (paski) na pewno zadziałał
+                st.table(styler)
                 
                 # --- OPERACJE NA PRODUKTACH ---
                 st.divider()
