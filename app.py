@@ -184,28 +184,33 @@ with tab_prod:
             if products:
                 df = pd.DataFrame(products)
                 
-                # Funkcja do kolorowania wierszy na podstawie stanu magazynowego
+                # Funkcja do tworzenia paska stanu (Progress Bar) za pomocą CSS Gradient
                 def style_stock_levels(s):
-                    # Obliczamy maksymalną wartość w kolumnie (dla skali)
-                    # Jeśli brak produktów, przyjmujemy 100 jako bazę
-                    max_val = s.max() if not s.empty and s.max() > 0 else 100
+                    # Obliczamy maksymalną wartość w kolumnie (dla skali 100%)
+                    max_val = max(s.max(), 1) if not s.empty and s.max() > 0 else 100
                     
-                    colors = []
+                    styles = []
                     for val in s:
+                        # Obliczamy procent zapełnienia paska
                         ratio = val / max_val
+                        percent = ratio * 100
+                        
+                        # Dobór koloru w zależności od stanu magazynowego
                         if ratio < 0.25:
-                            # Czerwony tło (krytyczny stan)
-                            colors.append("background-color: #ffcccc; color: #990000;")
+                            bar_color = "#ff4b4b" # Czerwony (niski stan)
                         elif ratio < 0.60:
-                            # Żółty/Pomarańczowy tło (średni stan)
-                            colors.append("background-color: #fff3cd; color: #856404;")
+                            bar_color = "#ffa421" # Żółty/Pomarańczowy (średni stan)
                         else:
-                            # Zielony tło (dobry stan)
-                            colors.append("background-color: #d4edda; color: #155724;")
-                    return colors
+                            bar_color = "#21c354" # Zielony (wysoki stan)
+                            
+                        # Tworzymy gradient CSS, który wygląda jak pasek postępu w tle komórki
+                        # Składnia: linear-gradient(90deg, KOLOR X%, PRZEZROCZYSTY X%)
+                        # "transparent" sprawia, że reszta komórki ma standardowe tło
+                        style = f"background: linear-gradient(90deg, {bar_color} {percent:.1f}%, transparent {percent:.1f}%); padding-left: 5px;"
+                        styles.append(style)
+                    return styles
 
                 # Aplikujemy style do DataFrame (Pandas Styler)
-                # Apply działa na kolumnę 'liczba'
                 styler = df.style.apply(style_stock_levels, subset=["liczba"])
                 
                 # Konfiguracja wyświetlania tabeli ze stylami
@@ -215,7 +220,6 @@ with tab_prod:
                     column_config={
                         "nazwa": st.column_config.TextColumn("Nazwa", width="medium"),
                         "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
-                        # Zmieniamy ProgressColumn na NumberColumn, bo kolory załatwia Styler
                         "liczba": st.column_config.NumberColumn("Ilość", format="%d szt."),
                         "kategoria_nazwa": st.column_config.TextColumn("Kategoria"),
                     },
