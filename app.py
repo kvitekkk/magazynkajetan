@@ -121,10 +121,20 @@ def add_product(data):
         handle_error(e)
         return False
 
+def update_product_quantity(product_id, new_quantity):
+    """Aktualizuje liczbę sztuk produktu"""
+    try:
+        supabase.table("produkty").update({"liczba": new_quantity}).eq("id", product_id).execute()
+        st.toast(f"✅ Zaktualizowano stan magazynowy", icon="📉")
+        return True
+    except Exception as e:
+        handle_error(e)
+        return False
+
 def delete_product(prod_id):
     try:
         supabase.table("produkty").delete().eq("id", prod_id).execute()
-        st.toast("✅ Produkt usunięty", icon="🗑️")
+        st.toast("✅ Produkt usunięty trwale", icon="🗑️")
         return True
     except Exception as e:
         handle_error(e)
@@ -181,30 +191,66 @@ with tab_prod:
                     column_config={
                         "nazwa": st.column_config.TextColumn("Nazwa", width="medium"),
                         "cena": st.column_config.NumberColumn("Cena", format="%.2f zł"),
-                        # Obliczamy max value bezpiecznie, nawet jeśli lista jest pusta lub ma zera
+                        # Obliczamy max value bezpiecznie
                         "liczba": st.column_config.ProgressColumn(
                             "Ilość", 
                             format="%d szt.", 
                             min_value=0, 
                             max_value=max([p.get('liczba', 100) for p in products]) if products else 100
                         ),
-                        "kategoria_nazwa": st.column_config.TextColumn("Kategoria"), # POPRAWIONO: TagColumn -> TextColumn
+                        "kategoria_nazwa": st.column_config.TextColumn("Kategoria"),
                     },
                     use_container_width=True,
                     hide_index=True
                 )
                 
-                # Szybkie usuwanie pod tabelą
-                with st.expander("🗑️ Usuń produkt", expanded=False):
-                    p_to_del = st.selectbox(
-                        "Wybierz produkt", 
-                        products, 
-                        format_func=lambda x: f"{x['nazwa']} ({x['liczba']} szt.)"
-                    )
-                    if st.button("Usuń trwale", type="primary", use_container_width=True):
-                        if delete_product(p_to_del['id']):
-                            time.sleep(1)
-                            st.rerun()
+                # --- OPERACJE NA PRODUKTACH ---
+                st.divider()
+                st.subheader("Operacje")
+                
+                op_col1, op_col2 = st.columns(2, gap="medium")
+                
+                # 1. Zmniejszanie stanu (Wydawanie towaru)
+                with op_col1:
+                    with st.container(border=True):
+                        st.write("📉 **Wydaj towar (Zmniejsz stan)**")
+                        with st.form("decrease_qty_form", clear_on_submit=True):
+                            p_update = st.selectbox(
+                                "Wybierz produkt", 
+                                products, 
+                                format_func=lambda x: f"{x['nazwa']} (Stan: {x['liczba']} szt.)",
+                                key="sel_update"
+                            )
+                            qty_to_remove = st.number_input("Ile sztuk wydać/usunąć?", min_value=1, step=1, value=1)
+                            
+                            if st.form_submit_button("Zatwierdź zmianę", use_container_width=True):
+                                current_qty = p_update['liczba']
+                                if current_qty >= qty_to_remove:
+                                    new_qty = current_qty - qty_to_remove
+                                    if update_product_quantity(p_update['id'], new_qty):
+                                        time.sleep(1)
+                                        st.rerun()
+                                else:
+                                    st.error(f"Błąd: Na stanie masz tylko {current_qty} szt.!")
+
+                # 2. Usuwanie całkowite
+                with op_col2:
+                    with st.container(border=True):
+                        st.write("🗑️ **Usuń produkt z bazy**")
+                        # Formularz tylko do wyboru (button musi być poza formem żeby nie czyścić selectboxa przed akcją)
+                        p_delete = st.selectbox(
+                            "Produkt do usunięcia", 
+                            products, 
+                            format_func=lambda x: f"{x['nazwa']}",
+                            key="sel_delete",
+                            label_visibility="visible"
+                        )
+                        st.warning("Tej operacji nie można cofnąć.")
+                        if st.button("Usuń trwale", type="primary", use_container_width=True):
+                            if delete_product(p_delete['id']):
+                                time.sleep(1)
+                                st.rerun()
+
             else:
                 st.info("Magazyn jest pusty.")
 
