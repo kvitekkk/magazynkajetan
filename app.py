@@ -142,20 +142,20 @@ with col_h1:
 # Definicja kolorów w zależności od trybu
 if dark_mode:
     colors = {
-        "bg": "#0e1117",  # Głęboka czerń (GitHub Dark style)
-        "text_main": "#f0f6fc", # Jasny biały/szary
-        "text_sec": "#8b949e", # Stonowany szary
-        "card_bg": "#161b22", # Ciemnoszary dla kart
-        "border": "#30363d", # Wyraźne ramki
-        "gradient_text": "-webkit-linear-gradient(45deg, #f0f6fc, #8b949e)",
+        "bg": "#0e1117",  # Głęboka czerń
+        "text_main": "#ffffff", # CZYSTA BIEL
+        "text_sec": "#e5e7eb", # Bardzo jasny szary (prawie biały)
+        "card_bg": "#161b22",
+        "border": "#30363d", 
+        "gradient_text": "-webkit-linear-gradient(45deg, #ffffff, #e5e7eb)", # Biały gradient
         "table_header_bg": "#161b22",
-        "table_header_text": "#f0f6fc",
+        "table_header_text": "#ffffff",
         "table_row_border": "#30363d",
         "table_row_hover": "#21262d",
-        "input_bg": "#0d1117", # Kontrastowe tło inputów
+        "input_bg": "#0d1117",
         "input_border": "#30363d",
         "btn_sec_border": "#30363d",
-        "btn_sec_text": "#c9d1d9"
+        "btn_sec_text": "#ffffff"
     }
 else:
     colors = {
@@ -204,8 +204,9 @@ st.markdown(f"""
         color: {colors['text_sec']} !important;
     }}
     
-    p, label {{
-        color: {colors['text_main']};
+    /* Wymuszenie białego koloru dla wszystkich etykiet i paragrafów w kontenerach */
+    p, label, .stWidgetLabel, div[data-testid="stMarkdownContainer"] p {{
+        color: {colors['text_main']} !important;
     }}
 
     /* Karty metryk (na górze) */
@@ -223,11 +224,11 @@ st.markdown(f"""
     }}
     div[data-testid="stMetricLabel"] {{
         font-size: 0.9rem;
-        color: {colors['text_sec']};
+        color: {colors['text_sec']} !important;
     }}
     div[data-testid="stMetricValue"] {{
         font-weight: 700;
-        color: {colors['text_main']};
+        color: {colors['text_main']} !important;
     }}
 
     /* Kontenery z obramowaniem (Formularze, Sekcje) */
@@ -309,7 +310,7 @@ st.markdown(f"""
         border-radius: 8px;
         border-color: {colors['input_border']};
         background-color: {colors['input_bg']};
-        color: {colors['text_main']};
+        color: {colors['text_main']} !important;
     }}
     .stTextInput input:focus, .stNumberInput input:focus {{
         border-color: #2563eb;
